@@ -12,7 +12,7 @@
        alt="{{ car.title }}">
   {% if car.images %}
     <div class="thumbs">
-      {% for img in car.images[:5] %}
+      {% for img in car.images %}
         <img src="{{ img.url }}" alt="thumb"
              onclick="document.getElementById('mainImage').src=this.src">
       {% endfor %}
@@ -55,5 +55,6 @@
     </form>
   </div>
 </div>
+
 {% endblock %}
 

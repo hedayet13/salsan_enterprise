@@ -142,10 +142,10 @@ nav a:hover{ opacity:1; }
   border:1px solid #232a36;
 }
 .detail-gallery .thumbs{
-  display:flex; gap:8px; flex-wrap:wrap; margin-top:.5rem;
+  display:flex; flex-wrap:wrap; gap:8px; margin-top:.5rem;
 }
 .detail-gallery .thumbs img{
-  width:auto; height:90px; object-fit:cover;
+  height:90px; width:auto; object-fit:cover;
   border:1px solid #333; border-radius:.375rem; flex:0 0 auto;
 }
 

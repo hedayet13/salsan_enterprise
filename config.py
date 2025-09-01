@@ -8,5 +8,5 @@ class Config:
 
     # Image upload settings (pure constants / env lookups only)
     UPLOAD_FOLDER = os.environ.get("UPLOAD_FOLDER", os.path.join("static", "uploads", "cars"))
-    MAX_CONTENT_LENGTH = int(os.environ.get("MAX_IMAGE_MB", "5")) * 1024 * 1024  # default 5MB
+    MAX_CONTENT_LENGTH = int(os.environ.get("MAX_UPLOAD_MB", "50")) * 1024 * 1024  # default 50MB
     ALLOWED_EXTENSIONS = {"png", "jpg", "jpeg", "gif", "webp"}

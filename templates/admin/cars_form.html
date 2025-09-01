@@ -22,27 +22,45 @@
     <input name="body_type" placeholder="Body Type" value="{{ car.body_type if car else '' }}">
     <input name="location" placeholder="Location" value="{{ car.location if car else '' }}">
   </div>
-<label>Upload Images (max 5)</label>
 
-<div class="grid-5" style="display:grid;grid-template-columns:repeat(5,minmax(80px,1fr));gap:10px;margin-bottom:10px;">
-  <!-- Live preview slots -->
-  {% for i in range(1,6) %}
-    <div style="border:1px solid #333; padding:6px; border-radius:8px; text-align:center;">
-      <img id="slot{{i}}" style="max-height:100px;display:none;" alt="preview {{i}}">
-      <div style="margin-top:6px;font-size:12px;color:#999;" id="slot{{i}}_name"></div>
-    </div>
-  {% endfor %}
-</div>
+<label>Upload Images (max 10)</label>
 
-<!-- Five individual file inputs -->
-<div style="display:flex;gap:10px;flex-wrap:wrap;margin-bottom:12px;">
-  {% for i in range(1,6) %}
-    <label class="btn">
-      <input type="file" name="image_file{{i}}" id="image_file{{i}}" accept="image/*" style="display:none;">
-      Upload {{i}}
-    </label>
-  {% endfor %}
-</div>
+<input type="file" name="image_files" id="image_files" accept="image/*" multiple>
+
+<div id="multi_preview" class="preview-grid" style="margin-top:8px;"></div>
+<div class="small muted" id="count_hint" style="margin-top:6px;">0 / 10 selected</div>
+
+<script>
+  // Live preview + client-side limit of 10
+  const input = document.getElementById('image_files');
+  const grid  = document.getElementById('multi_preview');
+  const count = document.getElementById('count_hint');
+
+  input.addEventListener('change', () => {
+    const files = Array.from(input.files || []);
+    if (files.length > 10) {
+      alert('Please select at most 10 images.');
+      input.value = '';       // clear selection
+      grid.innerHTML = '';
+      count.textContent = '0 / 10 selected';
+      return;
+    }
+    grid.innerHTML = '';
+    files.forEach(f => {
+      const img = document.createElement('img');
+      img.src = URL.createObjectURL(f);
+      img.style.height = '100px';
+      img.style.objectFit = 'cover';
+      img.style.border = '1px solid #333';
+      img.style.borderRadius = '6px';
+      img.style.marginRight = '8px';
+      grid.appendChild(img);
+    });
+    count.textContent = files.length + ' / 10 selected';
+  });
+</script>
+
+
 
 {% if car %}
   <!-- Existing cover image preview (what dashboard uses) -->
@@ -58,7 +76,7 @@
   {% if car.images %}
     <!-- Existing gallery thumbnails -->
     <div class="gallery" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-      {% for img in car.images[:5] %}
+      {% for img in car.images %}
         <img src="{{ img.url }}" alt="car image" style="max-height:90px;border:1px solid #333;border-radius:6px;">
       {% endfor %}
     </div>
@@ -94,8 +112,26 @@
 </script>
 
 
-
   <button>{{ 'Update' if car else 'Create' }}</button>
 </form>
+
+{% if car and car.images %}
+  <h3 style="margin-top:1rem;">Existing Images</h3>
+  <div class="gallery" style="display:flex; gap:12px; flex-wrap:wrap;">
+    {% for img in car.images %}
+      <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
+        <img src="{{ img.url }}" alt="car image"
+             style="height:90px; width:auto; object-fit:cover; border:1px solid #333; border-radius:6px;">
+        <form method="post"
+              action="{{ url_for('admin_car_image_delete', car_id=car.id, image_id=img.id) }}"
+              onsubmit="return confirm('Delete this image?')">
+          <button class="btn small danger" type="submit">Delete</button>
+        </form>
+      </div>
+    {% endfor %}
+  </div>
+{% endif %}
+
+
 
 {% endblock %}

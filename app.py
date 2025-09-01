@@ -14,6 +14,7 @@ from werkzeug.utils import secure_filename
 from models import db, Admin, Car, Message, CarImage
 
 
+
 from config import Config
 
 def create_app():
@@ -181,6 +182,16 @@ def create_app():
         logout_user()
         flash("Logged out.", "info")
         return redirect(url_for("admin_login"))
+    
+    @app.post("/admin/cars/<int:car_id>/images/<int:image_id>/set-cover")
+    @login_required
+    def admin_car_image_set_cover(car_id, image_id):
+        car = Car.query.get_or_404(car_id)
+        img = CarImage.query.filter_by(id=image_id, car_id=car.id).first_or_404()
+        car.image_url = img.url
+        db.session.commit()
+        flash("Cover image updated.", "success")
+        return redirect(url_for("admin_cars_edit", car_id=car.id))
 
     @app.route("/admin")
     @login_required
@@ -222,15 +233,13 @@ def create_app():
             )
             # Handle main image upload
             # Save multiple images and set cover if not set
-            new_files = []
-            for i in range(1, 6):
-                f = request.files.get(f'image_file{i}')
-                if f and f.filename and allowed_file(f.filename):
-                    new_files.append(f)
+            # Multi-upload: take up to 10
+            files = request.files.getlist('image_files')  # name matches the single input
+            files = [f for f in files if f and f.filename and allowed_file(f.filename)]
+            files = files[:10]
 
-            # Save files (limit 5 total for a new car)
             added_urls = []
-            for idx, file in enumerate(new_files[:5]):
+            for file in files:
                 filename = secure_filename(file.filename)
                 unique = f"{uuid.uuid4().hex}_{filename}"
                 file.save(os.path.join(abs_upload, unique))
@@ -238,11 +247,11 @@ def create_app():
                 rel_to_static = os.path.relpath(os.path.join(abs_upload, unique), static_root).replace(os.sep, '/')
                 added_urls.append(url_for('static', filename=rel_to_static))
 
-            # Create CarImage rows with sort order
+            # Create CarImage rows (sorted by selection order)
             for order, url in enumerate(added_urls):
                 db.session.add(CarImage(car=car, url=url, sort_order=order))
 
-            # Set cover if not set or placeholder
+            # If cover not set (or placeholder), use first uploaded
             if added_urls and (not car.image_url or 'placeholder.svg' in car.image_url):
                 car.image_url = added_urls[0]
 
@@ -273,21 +282,18 @@ def create_app():
             # keep existing cover image if none uploaded
             car.image_url = car.image_url
 
-            # Gather up to 5 new files
-            incoming = []
-            for i in range(1, 6):
-                f = request.files.get(f'image_file{i}')
-                if f and f.filename and allowed_file(f.filename):
-                    incoming.append(f)
+            max_total = 10
+            files = request.files.getlist('image_files')
+            files = [f for f in files if f and f.filename and allowed_file(f.filename)]
 
-            # Enforce maximum 5 total images PER CAR
-            current_count = len(car.images)
-            room = max(0, 5 - current_count)
-            to_save = incoming[:room]
-            if incoming and room == 0:
-                flash("This car already has the maximum of 5 images.", "warning")
-            elif len(incoming) > room:
-                flash(f"Only {room} more image(s) allowed (max 5 total).", "warning")
+            current = len(car.images)
+            room = max(0, max_total - current)
+            to_save = files[:room]
+
+            if files and room == 0:
+                flash("This car already has the maximum of 10 images.", "warning")
+            elif len(files) > room:
+                flash(f"Only {room} more image(s) allowed (max {max_total} total).", "warning")
 
             added_urls = []
             for f in to_save:
@@ -298,12 +304,10 @@ def create_app():
                 rel_to_static = os.path.relpath(os.path.join(abs_upload, unique), static_root).replace(os.sep, '/')
                 added_urls.append(url_for('static', filename=rel_to_static))
 
-            # Append CarImage rows with proper sort order
             next_sort = (car.images[-1].sort_order + 1) if car.images else 0
             for idx, url in enumerate(added_urls):
                 db.session.add(CarImage(car=car, url=url, sort_order=next_sort + idx))
 
-            # If cover is empty/placeholder, set to first newly added
             if added_urls and (not car.image_url or 'placeholder.svg' in car.image_url):
                 car.image_url = added_urls[0]
 
@@ -320,20 +324,30 @@ def create_app():
         car = Car.query.get_or_404(car_id)
         img = CarImage.query.filter_by(id=image_id, car_id=car.id).first_or_404()
 
-        # try to delete file from disk if it's under /static/
+        # Try to remove the file from disk if it lives under /static/
         if img.url and img.url.startswith("/static/"):
-            rel = img.url[len("/static/"):]
+            rel = img.url[len("/static/"):]                          # uploads/cars/xxx.jpg
             abs_path = os.path.join(app.root_path, "static", rel.replace("/", os.sep))
             try:
                 if os.path.exists(abs_path):
                     os.remove(abs_path)
             except Exception:
+                # ignore file delete errors – we still remove DB row
                 pass
+
+        # If this image was the cover, clear/replace it
+        if car.image_url == img.url:
+            car.image_url = None
+            # pick another image as cover if there is one
+            remaining = [ci for ci in car.images if ci.id != img.id]
+            if remaining:
+                car.image_url = remaining[0].url
 
         db.session.delete(img)
         db.session.commit()
         flash("Image deleted.", "info")
         return redirect(url_for("admin_cars_edit", car_id=car.id))
+
 
 
     @app.route("/admin/cars/<int:car_id>/delete", methods=["POST"])
