@@ -1,4 +1,4 @@
-# Shamsons-style Auto Dealer (Flask + SQLite)
+# Salsan enterprise Car Dealer (Flask + SQLite)
 
 A clean Flask app inspired by the layout and features of shamsonsauto.com, with:
 - Stock cars
