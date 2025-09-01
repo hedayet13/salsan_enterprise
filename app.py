@@ -1,3 +1,6 @@
+#todo devilered list done
+
+
 from datetime import datetime
 import click
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, current_app

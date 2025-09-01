@@ -7,6 +7,18 @@
   --danger:#ff6b6b; --warning:#f0ad4e;
 }
 
+/* Delivered badge */
+.badge{display:inline-flex;align-items:center;gap:.35rem;
+  padding:.25rem .55rem;border-radius:.5rem;font-size:.75rem;font-weight:700}
+.badge.delivered{background:#13351e;color:#baf3c0;border:1px solid #1e5d33}
+
+
+/* Optional: overlay badge on images */
+.detail-gallery{position:relative}
+.detail-gallery .status-badge{position:absolute;top:.5rem;left:.5rem}
+.card .img-wrap{position:relative}
+.card .status-badge{position:absolute;top:.5rem;left:.5rem}
+
 /* Base / reset */
 *{ box-sizing:border-box; }
 html,body{ height:100%; }
@@ -166,6 +178,7 @@ nav a:hover{ opacity:1; }
 
 /* Delivered list grayscale */
 .delivered img{ filter:grayscale(1); opacity:.7; }
+
 
 /* Pagination */
 .pagination{ display:flex; gap:1rem; align-items:center; justify-content:center; margin:1rem 0; }
