@@ -1,26 +1,26 @@
 {% extends "base.html" %}
 {% block title %}{{ car.title }}{% endblock %}
 {% block content %}
-<div class="detail-gallery">
-  <img id="mainImage"
-       class="main-image"
-       src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}"
-       alt="{{ car.title }}">
+<div class="detail">
+  <!-- LEFT: images -->
+  <div class="detail-gallery">
+    <img id="mainImage"
+         class="main-image"
+         src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}"
+         alt="{{ car.title }}">
 
-  {% if car.images %}
+    {% if car.images %}
     <div class="thumbs">
       {% for img in car.images[:5] %}
         <img src="{{ img.url }}" alt="thumb"
              onclick="document.getElementById('mainImage').src=this.src">
       {% endfor %}
     </div>
-  {% endif %}
-</div>
+    {% endif %}
+  </div>
 
-
+  <!-- RIGHT: details -->
   <div class="detail-info">
-    <!-- (rest of your right column stays the same) -->
-
     <h1>{{ car.title }}</h1>
     <p class="price big">৳ {{ "{:,}".format(car.price or 0) }}</p>
     <ul class="specs">
@@ -52,3 +52,4 @@
   </div>
 </div>
 {% endblock %}
+
