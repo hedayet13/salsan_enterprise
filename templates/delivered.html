@@ -5,7 +5,11 @@
 <div class="cards">
   {% for car in cars %}
     <div class="card delivered">
-      <img src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}" alt="{{ car.title }}">
+      <img class="card-cover"
+     src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}"
+     alt="{{ car.title }}"
+     loading="lazy" decoding="async">
+
       <div class="card-body">
         <h3>{{ car.title }}</h3>
         <p class="muted small">{{ car.year }} • Delivered</p>

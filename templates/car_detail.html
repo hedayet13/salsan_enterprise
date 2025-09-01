@@ -1,10 +1,20 @@
 {% extends "base.html" %}
 {% block title %}{{ car.title }}{% endblock %}
 {% block content %}
-<div class="detail">
-  <div class="detail-gallery">
-  <img src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}"
-       alt="{{ car.title }}" style="width:100%; border-radius:1rem; border:1px solid #232a36">
+<div class="detail-gallery">
+  <img id="mainImage"
+       class="main-image"
+       src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}"
+       alt="{{ car.title }}">
+
+  {% if car.images %}
+    <div class="thumbs">
+      {% for img in car.images[:5] %}
+        <img src="{{ img.url }}" alt="thumb"
+             onclick="document.getElementById('mainImage').src=this.src">
+      {% endfor %}
+    </div>
+  {% endif %}
 </div>
 
 

@@ -8,14 +8,16 @@ from flask_login import LoginManager, login_user, logout_user, login_required, c
 import os
 import uuid
 from werkzeug.utils import secure_filename
-from models import db, Admin, Car, Message
+from models import db, Admin, Car, Message, CarImage
+
+
 from config import Config
 
 def create_app():
     app = Flask(__name__, static_folder="static", template_folder="templates")
     app.config.from_object(Config)
 
-    # Ensure upload folder exists
+    # ensure upload directory exists
     upload_folder = app.config.get("UPLOAD_FOLDER", "static/uploads/cars")
     abs_upload = upload_folder if os.path.isabs(upload_folder) else os.path.join(app.root_path, upload_folder)
     os.makedirs(abs_upload, exist_ok=True)
@@ -23,6 +25,7 @@ def create_app():
     def allowed_file(filename):
         ext = filename.rsplit('.', 1)[-1].lower() if '.' in filename else ''
         return ext in app.config.get("ALLOWED_EXTENSIONS", {"png","jpg","jpeg","gif","webp"})
+
 
 
     db.init_app(app)
@@ -213,19 +216,33 @@ def create_app():
                 location=request.form.get("location"),
                 description=request.form.get("description"),
                 image_url = url_for('static', filename='img/placeholder.svg')
-
             )
             # Handle main image upload
-            file = request.files.get('image_file')
-            if file and file.filename and allowed_file(file.filename):
+            # Save multiple images and set cover if not set
+            new_files = []
+            for i in range(1, 6):
+                f = request.files.get(f'image_file{i}')
+                if f and f.filename and allowed_file(f.filename):
+                    new_files.append(f)
+
+            # Save files (limit 5 total for a new car)
+            added_urls = []
+            for idx, file in enumerate(new_files[:5]):
                 filename = secure_filename(file.filename)
                 unique = f"{uuid.uuid4().hex}_{filename}"
-                upload_folder = app.config.get("UPLOAD_FOLDER", "static/uploads/cars")
-                abs_upload = upload_folder if os.path.isabs(upload_folder) else os.path.join(app.root_path, upload_folder)
                 file.save(os.path.join(abs_upload, unique))
                 static_root = os.path.join(app.root_path, 'static')
                 rel_to_static = os.path.relpath(os.path.join(abs_upload, unique), static_root).replace(os.sep, '/')
-                car.image_url = url_for('static', filename=rel_to_static)
+                added_urls.append(url_for('static', filename=rel_to_static))
+
+            # Create CarImage rows with sort order
+            for order, url in enumerate(added_urls):
+                db.session.add(CarImage(car=car, url=url, sort_order=order))
+
+            # Set cover if not set or placeholder
+            if added_urls and (not car.image_url or 'placeholder.svg' in car.image_url):
+                car.image_url = added_urls[0]
+
 
             db.session.add(car)
             db.session.commit()
@@ -250,11 +267,71 @@ def create_app():
             car.color = request.form.get("color")
             car.location = request.form.get("location")
             car.description = request.form.get("description")
+            # keep existing cover image if none uploaded
             car.image_url = car.image_url
+
+            # Gather up to 5 new files
+            incoming = []
+            for i in range(1, 6):
+                f = request.files.get(f'image_file{i}')
+                if f and f.filename and allowed_file(f.filename):
+                    incoming.append(f)
+
+            # Enforce maximum 5 total images PER CAR
+            current_count = len(car.images)
+            room = max(0, 5 - current_count)
+            to_save = incoming[:room]
+            if incoming and room == 0:
+                flash("This car already has the maximum of 5 images.", "warning")
+            elif len(incoming) > room:
+                flash(f"Only {room} more image(s) allowed (max 5 total).", "warning")
+
+            added_urls = []
+            for f in to_save:
+                filename = secure_filename(f.filename)
+                unique = f"{uuid.uuid4().hex}_{filename}"
+                f.save(os.path.join(abs_upload, unique))
+                static_root = os.path.join(app.root_path, 'static')
+                rel_to_static = os.path.relpath(os.path.join(abs_upload, unique), static_root).replace(os.sep, '/')
+                added_urls.append(url_for('static', filename=rel_to_static))
+
+            # Append CarImage rows with proper sort order
+            next_sort = (car.images[-1].sort_order + 1) if car.images else 0
+            for idx, url in enumerate(added_urls):
+                db.session.add(CarImage(car=car, url=url, sort_order=next_sort + idx))
+
+            # If cover is empty/placeholder, set to first newly added
+            if added_urls and (not car.image_url or 'placeholder.svg' in car.image_url):
+                car.image_url = added_urls[0]
+
+
             db.session.commit()
             flash("Car updated.", "success")
             return redirect(url_for("admin_cars"))
         return render_template("admin/cars_form.html", car=car)
+
+    
+    @app.post("/admin/cars/<int:car_id>/images/<int:image_id>/delete")
+    @login_required
+    def admin_car_image_delete(car_id, image_id):
+        car = Car.query.get_or_404(car_id)
+        img = CarImage.query.filter_by(id=image_id, car_id=car.id).first_or_404()
+
+        # try to delete file from disk if it's under /static/
+        if img.url and img.url.startswith("/static/"):
+            rel = img.url[len("/static/"):]
+            abs_path = os.path.join(app.root_path, "static", rel.replace("/", os.sep))
+            try:
+                if os.path.exists(abs_path):
+                    os.remove(abs_path)
+            except Exception:
+                pass
+
+        db.session.delete(img)
+        db.session.commit()
+        flash("Image deleted.", "info")
+        return redirect(url_for("admin_cars_edit", car_id=car.id))
+
 
     @app.route("/admin/cars/<int:car_id>/delete", methods=["POST"])
     @login_required
