@@ -23,26 +23,24 @@
     <input name="location" placeholder="Location" value="{{ car.location if car else '' }}">
   </div>
 
-<label>Upload Images (max 10)</label>
-
+<label>Upload Images (max 20)</label>
 <input type="file" name="image_files" id="image_files" accept="image/*" multiple>
-
 <div id="multi_preview" class="preview-grid" style="margin-top:8px;"></div>
-<div class="small muted" id="count_hint" style="margin-top:6px;">0 / 10 selected</div>
+<div class="small muted" id="count_hint" style="margin-top:6px;">0 / 20 selected</div>
 
 <script>
-  // Live preview + client-side limit of 10
+  const MAX = 20;   // ← new max
   const input = document.getElementById('image_files');
   const grid  = document.getElementById('multi_preview');
   const count = document.getElementById('count_hint');
 
   input.addEventListener('change', () => {
     const files = Array.from(input.files || []);
-    if (files.length > 10) {
-      alert('Please select at most 10 images.');
-      input.value = '';       // clear selection
+    if (files.length > MAX) {
+      alert(`Please select at most ${MAX} images.`);
+      input.value = '';
       grid.innerHTML = '';
-      count.textContent = '0 / 10 selected';
+      count.textContent = `0 / ${MAX} selected`;
       return;
     }
     grid.innerHTML = '';
@@ -56,7 +54,7 @@
       img.style.marginRight = '8px';
       grid.appendChild(img);
     });
-    count.textContent = files.length + ' / 10 selected';
+    count.textContent = `${files.length} / ${MAX} selected`;
   });
 </script>
 

@@ -233,10 +233,10 @@ def create_app():
             )
             # Handle main image upload
             # Save multiple images and set cover if not set
-            # Multi-upload: take up to 10
+            # Multi-upload: take up to 20
             files = request.files.getlist('image_files')  # name matches the single input
             files = [f for f in files if f and f.filename and allowed_file(f.filename)]
-            files = files[:10]
+            files = files[:20]
 
             added_urls = []
             for file in files:
@@ -282,7 +282,7 @@ def create_app():
             # keep existing cover image if none uploaded
             car.image_url = car.image_url
 
-            max_total = 10
+            max_total = 20
             files = request.files.getlist('image_files')
             files = [f for f in files if f and f.filename and allowed_file(f.filename)]
 
