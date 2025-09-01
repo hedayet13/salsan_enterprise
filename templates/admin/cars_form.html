@@ -1,0 +1,49 @@
+{% extends "base.html" %}
+{% block title %}{{ 'Edit' if car else 'Add' }} Car{% endblock %}
+{% block content %}
+
+<h1>{{ 'Edit' if car else 'Add' }} Car</h1>
+<form method="post" enctype="multipart/form-data" class="car-form">
+  <div class="grid-3">
+    <input name="title" placeholder="Title" value="{{ car.title if car else '' }}" required>
+    <input name="make" placeholder="Make" value="{{ car.make if car else '' }}">
+    <input name="model" placeholder="Model" value="{{ car.model if car else '' }}">
+  </div>
+  <div class="grid-4">
+    <input type="number" name="year" placeholder="Year" value="{{ car.year if car else '' }}">
+    <input type="number" name="price" placeholder="Price" value="{{ car.price if car else '' }}">
+    <input type="number" name="mileage_km" placeholder="Mileage (km)" value="{{ car.mileage_km if car else '' }}">
+    <input name="color" placeholder="Color" value="{{ car.color if car else '' }}">
+  </div>
+  <div class="grid-4">
+    <input name="fuel_type" placeholder="Fuel (Petrol/Diesel/Hybrid/Electric)"
+      value="{{ car.fuel_type if car else '' }}">
+    <input name="transmission" placeholder="Transmission" value="{{ car.transmission if car else '' }}">
+    <input name="body_type" placeholder="Body Type" value="{{ car.body_type if car else '' }}">
+    <input name="location" placeholder="Location" value="{{ car.location if car else '' }}">
+  </div>
+  <label>Main Image</label>
+<input type="file" id="image_file" name="image_file" accept="image/*">
+{% if car %}
+  <div class="preview">
+    <img
+      src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}"
+      alt="Current image"
+      style="max-height:120px"
+    >
+  </div>
+{% endif %}
+
+  <button>{{ 'Update' if car else 'Create' }}</button>
+</form>
+
+<script>
+  const input = document.getElementById('image_file');
+  input?.addEventListener('change', e => {
+    const [file] = e.target.files || [];
+    if (!file) return;
+    const img = document.querySelector('.preview img');
+    if (img) img.src = URL.createObjectURL(file);
+  });
+</script>
+{% endblock %}

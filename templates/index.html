@@ -1,0 +1,28 @@
+{% extends "base.html" %}
+{% block title %}Home - Auto Dealer{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-inner">
+    <h1>Find Your Next Car</h1>
+    <p>Browse fresh arrivals and great deals today.</p>
+    <a class="btn" href="{{ url_for('stock') }}">Browse Stock</a>
+  </div>
+</section>
+
+<h2 class="mt">Latest Stock</h2>
+<div class="cards">
+  {% for car in cars %}
+    <a class="card" href="{{ url_for('car_detail', car_id=car.id) }}">
+      <img src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}" alt="{{ car.title }}">
+
+      <div class="card-body">
+        <h3>{{ car.title }}</h3>
+        <p class="price">৳ {{ "{:,}".format(car.price or 0) }}</p>
+        <p class="muted small">{{ car.year }} • {{ car.mileage_km }} km • {{ car.fuel_type }} • {{ car.transmission }}</p>
+      </div>
+    </a>
+  {% else %}
+    <p>No cars yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

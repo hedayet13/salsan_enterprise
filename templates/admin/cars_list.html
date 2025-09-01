@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Manage Cars{% endblock %}
+{% block content %}
+<h1>Manage Cars</h1>
+<p><a class="btn" href="{{ url_for('admin_cars_new') }}">+ Add Car</a></p>
+<table class="table">
+  <thead>
+    <tr>
+      <th>ID</th>
+      <th>Image</th>  {# <-- added #}
+      <th>Title</th>
+      <th>Price</th>
+      <th>Year</th>
+      <th>Delivered</th>
+      <th>Actions</th>
+    </tr>
+  </thead>
+  <tbody>
+  {% for c in cars %}
+    <tr>
+      <td>{{ c.id }}</td>
+      <td>
+        <img
+          src="{{ c.image_url or url_for('static', filename='img/placeholder.svg') }}"
+          alt="{{ c.title }}"
+          style="width:80px;height:60px;object-fit:cover;border-radius:.3rem;border:1px solid #232a36"
+        >
+      </td>
+      <td>{{ c.title }}</td>
+      <td>৳ {{ "{:,}".format(c.price or 0) }}</td>
+      <td>{{ c.year }}</td>
+      <td>{{ 'Yes' if c.is_delivered else 'No' }}</td>
+      <td class="nowrap">
+        <a class="btn small" href="{{ url_for('admin_cars_edit', car_id=c.id) }}">Edit</a>
+        <form action="{{ url_for('admin_cars_toggle_delivered', car_id=c.id) }}" method="post" style="display:inline">
+          <button class="btn small secondary">Toggle Delivered</button>
+        </form>
+        <form action="{{ url_for('admin_cars_delete', car_id=c.id) }}" method="post" style="display:inline" onsubmit="return confirm('Delete this car?')">
+          <button class="btn small danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="7" class="muted">No cars.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

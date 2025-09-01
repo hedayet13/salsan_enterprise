@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Dashboard{% endblock %}
+{% block content %}
+<h1>Dashboard</h1>
+<div class="stats">
+  <div class="stat"><div class="num">{{ stock_count }}</div><div class="label">In Stock</div></div>
+  <div class="stat"><div class="num">{{ delivered_count }}</div><div class="label">Delivered</div></div>
+  <div class="stat"><div class="num">{{ message_count }}</div><div class="label">Messages</div></div>
+</div>
+
+<div class="grid-2 mt">
+  <div>
+    <h3>Recent Cars</h3>
+    <ul class="list">
+      {% for c in latest_cars %}
+        <li><a href="{{ url_for('car_detail', car_id=c.id) }}">{{ c.title }}</a> <span class="muted small">({{ c.created_at.strftime('%Y-%m-%d') }})</span></li>
+      {% else %}
+        <li class="muted">No cars yet.</li>
+      {% endfor %}
+    </ul>
+    <p><a class="btn small" href="{{ url_for('admin_cars') }}">Manage Cars</a></p>
+  </div>
+  <div>
+    <h3>Recent Messages</h3>
+    <ul class="list">
+      {% for m in latest_msgs %}
+        <li><b>{{ m.name }}</b>: {{ m.subject or 'No subject' }} <span class="muted small">({{ m.created_at.strftime('%Y-%m-%d') }})</span></li>
+      {% else %}
+        <li class="muted">No messages.</li>
+      {% endfor %}
+    </ul>
+    <p><a class="btn small" href="{{ url_for('admin_messages') }}">View Messages</a></p>
+  </div>
+</div>
+{% endblock %}

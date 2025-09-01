@@ -1,0 +1,35 @@
+{% extends "base.html" %}
+{% block title %}Messages{% endblock %}
+{% block content %}
+<h1>Messages</h1>
+<table class="table">
+  <thead>
+    <tr><th>When</th><th>Name</th><th>Contact</th><th>Subject</th><th>Message</th><th>Status</th><th>Actions</th></tr>
+  </thead>
+  <tbody>
+  {% for m in messages %}
+    <tr class="{{ '' if m.is_read else 'unread' }}">
+      <td>{{ m.created_at.strftime('%Y-%m-%d %H:%M') }}</td>
+      <td>{{ m.name }}</td>
+      <td>
+        {% if m.email %}<div>{{ m.email }}</div>{% endif %}
+        {% if m.phone %}<div>{{ m.phone }}</div>{% endif %}
+      </td>
+      <td>{{ m.subject or '—' }}</td>
+      <td style="max-width:400px">{{ m.body }}</td>
+      <td>{{ 'Read' if m.is_read else 'New' }}</td>
+      <td class="nowrap">
+        <form action="{{ url_for('admin_messages_toggle_read', msg_id=m.id) }}" method="post" style="display:inline">
+          <button class="btn small secondary">Toggle Read</button>
+        </form>
+        <form action="{{ url_for('admin_messages_delete', msg_id=m.id) }}" method="post" style="display:inline" onsubmit="return confirm('Delete this message?')">
+          <button class="btn small danger">Delete</button>
+        </form>
+      </td>
+    </tr>
+  {% else %}
+    <tr><td colspan="7" class="muted">No messages.</td></tr>
+  {% endfor %}
+  </tbody>
+</table>
+{% endblock %}

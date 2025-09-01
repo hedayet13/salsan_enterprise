@@ -1,0 +1,71 @@
+{% extends "base.html" %}
+{% block title %}Stock Cars{% endblock %}
+{% block content %}
+<h1>Stock Cars</h1>
+<form class="filters" method="get">
+  <input type="text" name="q" placeholder="Search..." value="{{ params.get('q','') }}">
+  <input type="text" name="make" placeholder="Make" value="{{ params.get('make','') }}">
+  <input type="text" name="model" placeholder="Model" value="{{ params.get('model','') }}">
+  <input type="number" name="min_year" placeholder="Min Year" value="{{ params.get('min_year','') }}">
+  <input type="number" name="max_year" placeholder="Max Year" value="{{ params.get('max_year','') }}">
+  <input type="number" name="min_price" placeholder="Min Price" value="{{ params.get('min_price','') }}">
+  <input type="number" name="max_price" placeholder="Max Price" value="{{ params.get('max_price','') }}">
+  <select name="fuel">
+    <option value="">Fuel</option>
+    {% for f in ["Petrol","Diesel","Hybrid","Electric","CNG"] %}
+      <option value="{{f}}" {% if params.get('fuel')==f %}selected{% endif %}>{{f}}</option>
+    {% endfor %}
+  </select>
+  <select name="transmission">
+    <option value="">Transmission</option>
+    {% for t in ["Automatic","Manual","CVT"] %}
+      <option value="{{t}}" {% if params.get('transmission')==t %}selected{% endif %}>{{t}}</option>
+    {% endfor %}
+  </select>
+  <select name="body">
+    <option value="">Body Type</option>
+    {% for b in ["Sedan","SUV","Hatchback","Wagon","Crossover","Truck","Coupe","Convertible","Van"] %}
+      <option value="{{b}}" {% if params.get('body')==b %}selected{% endif %}>{{b}}</option>
+    {% endfor %}
+  </select>
+  <select name="sort">
+    {% for v,label in [("newest","Newest"),("year_desc","Year (new→old)"),("price_asc","Price ↑"),("price_desc","Price ↓")] %}
+      <option value="{{v}}" {% if params.get('sort','newest')==v %}selected{% endif %}>{{label}}</option>
+    {% endfor %}
+  </select>
+  <button>Apply</button>
+</form>
+
+<div class="cards">
+{% for car in cars %}
+  <a class="card" href="{{ url_for('car_detail', car_id=car.id) }}">
+<img src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}" alt="{{ car.title }}">
+
+    <div class="card-body">
+      <h3>{{ car.title }}</h3>
+      <p class="price">৳ {{ "{:,}".format(car.price or 0) }}</p>
+      <p class="muted small">{{ car.year }} • {{ car.mileage_km }} km • {{ car.fuel_type }} • {{ car.transmission }}</p>
+    </div>
+  </a>
+{% else %}
+  <p>No cars found.</p>
+{% endfor %}
+</div>
+
+{% macro page_url(page_num) -%}
+  {{ url_for('stock') }}?{% for k, v in params.items() if k != 'page' %}{{ k }}={{ v|urlencode }}&{% endfor %}page={{ page_num }}
+{%- endmacro %}
+
+{% if pagination.pages > 1 %}
+<div class="pagination">
+  {% if pagination.has_prev %}
+    <a href="{{ page_url(pagination.prev_num) }}">&laquo; Prev</a>
+  {% endif %}
+  <span>Page {{ pagination.page }} of {{ pagination.pages }}</span>
+  {% if pagination.has_next %}
+    <a href="{{ page_url(pagination.next_num) }}">Next &raquo;</a>
+  {% endif %}
+</div>
+{% endif %}
+
+{% endblock %}

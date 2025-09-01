@@ -1,0 +1,18 @@
+{% extends "base.html" %}
+{% block title %}Delivered Cars{% endblock %}
+{% block content %}
+<h1>Recently Delivered</h1>
+<div class="cards">
+  {% for car in cars %}
+    <div class="card delivered">
+      <img src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}" alt="{{ car.title }}">
+      <div class="card-body">
+        <h3>{{ car.title }}</h3>
+        <p class="muted small">{{ car.year }} • Delivered</p>
+      </div>
+    </div>
+  {% else %}
+    <p>No delivered cars yet.</p>
+  {% endfor %}
+</div>
+{% endblock %}

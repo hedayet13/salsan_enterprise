@@ -1,0 +1,44 @@
+{% extends "base.html" %}
+{% block title %}{{ car.title }}{% endblock %}
+{% block content %}
+<div class="detail">
+  <div class="detail-gallery">
+  <img src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}"
+       alt="{{ car.title }}" style="width:100%; border-radius:1rem; border:1px solid #232a36">
+</div>
+
+
+  <div class="detail-info">
+    <!-- (rest of your right column stays the same) -->
+
+    <h1>{{ car.title }}</h1>
+    <p class="price big">৳ {{ "{:,}".format(car.price or 0) }}</p>
+    <ul class="specs">
+      <li><b>Make:</b> {{ car.make }}</li>
+      <li><b>Model:</b> {{ car.model }}</li>
+      <li><b>Year:</b> {{ car.year }}</li>
+      <li><b>Mileage:</b> {{ car.mileage_km }} km</li>
+      <li><b>Fuel:</b> {{ car.fuel_type }}</li>
+      <li><b>Transmission:</b> {{ car.transmission }}</li>
+      <li><b>Body:</b> {{ car.body_type }}</li>
+      <li><b>Color:</b> {{ car.color }}</li>
+      <li><b>Location:</b> {{ car.location }}</li>
+    </ul>
+    <p>{{ car.description }}</p>
+
+    <h3>Contact about this car</h3>
+    <form action="{{ url_for('inquire', car_id=car.id) }}" method="post" class="contact-form">
+      <div class="grid-2">
+        <input name="name" placeholder="Your name" required>
+        <input name="email" placeholder="Email">
+      </div>
+      <div class="grid-2">
+        <input name="phone" placeholder="Phone">
+        <input placeholder="Subject" value="Inquiry: {{car.title}}" disabled>
+      </div>
+      <textarea name="message" rows="4" placeholder="Your message..." required></textarea>
+      <button>Send Inquiry</button>
+    </form>
+  </div>
+</div>
+{% endblock %}
