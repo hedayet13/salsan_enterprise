@@ -229,7 +229,8 @@ def create_app():
                 color=request.form.get("color"),
                 location=request.form.get("location"),
                 description=request.form.get("description"),
-                image_url = url_for('static', filename='img/placeholder.svg')
+                image_url = url_for('static', filename='img/placeholder.svg'),
+                auction_point=request.form.get("auction_point"),
             )
             # Handle main image upload
             # Save multiple images and set cover if not set
@@ -281,6 +282,7 @@ def create_app():
             car.description = request.form.get("description")
             # keep existing cover image if none uploaded
             car.image_url = car.image_url
+            car.auction_point = request.form.get("auction_point")
 
             max_total = 20
             files = request.files.getlist('image_files')

@@ -12,6 +12,7 @@
   <div class="grid-4">
     <input type="number" name="year" placeholder="Year" value="{{ car.year if car else '' }}">
     <input type="number" name="price" placeholder="Price" value="{{ car.price if car else '' }}">
+    <input name="auction_point" placeholder="Auction point" value="{{ car.auction_point if car else '' }}">
     <input type="number" name="mileage_km" placeholder="Mileage (km)" value="{{ car.mileage_km if car else '' }}">
     <input name="color" placeholder="Color" value="{{ car.color if car else '' }}">
   </div>

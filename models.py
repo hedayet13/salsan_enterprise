@@ -35,6 +35,7 @@ class Car(db.Model):
     model = db.Column(db.String(80), index=True)
     year = db.Column(db.Integer, index=True)
     price = db.Column(db.Integer, index=True)  # store in local currency integer
+    auction_point = db.Column(db.String(20))
     mileage_km = db.Column(db.Integer, index=True)
     fuel_type = db.Column(db.String(50), index=True)  # Petrol, Diesel, Hybrid, Electric
     transmission = db.Column(db.String(50), index=True)  # Automatic, Manual
