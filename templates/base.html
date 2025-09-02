@@ -20,6 +20,7 @@
     <form class="search" action="{{ url_for('stock') }}" method="get" role="search">
       <input type="text" name="q" placeholder="Search cars..." value="{{ request.args.get('q','') }}">
       <button>Search</button>
+      <button id="themeToggle" class="btn small secondary" type="button" aria-label="Toggle theme">🌙</button>
     </form>
 
     <!-- Desktop links -->
@@ -63,35 +64,45 @@
   {% block content %}{% endblock %}
 </main>
 
-<footer class="site-footer">
+<footer class="site-footer" id="contact">
   <div class="container grid-2">
     <div>
       <h4>About</h4>
       <p>Trusted importers and sellers of quality reconditioned cars. Browse our latest stock or contact us with your requirements.</p>
     </div>
+
     <div>
       <h4>Contact</h4>
-      <form action="{{ url_for('contact') }}" method="post" class="contact-form">
+      <!-- Footer contact form: email required + BD mobile pattern -->
+      <form action="{{ url_for('contact') }}" method="post" class="contact-form" novalidate>
         <div class="grid-2">
-          <input name="name" placeholder="Your name" required>
-          <input name="email" placeholder="Email">
+          <input name="name" placeholder="Your name" required aria-label="Your name" autocomplete="name">
+          <input name="email" type="email" placeholder="Email (required)" required aria-label="Email" autocomplete="email">
         </div>
         <div class="grid-2">
-          <input name="phone" placeholder="Phone">
-          <input name="subject" placeholder="Subject">
+          <input
+            name="phone"
+            type="tel"
+            inputmode="tel"
+            autocomplete="tel-national"
+            placeholder="Mobile (01XXXXXXXXX or +8801XXXXXXXXX)"
+            pattern="^(?:\+?8801\d{9}|01\d{9})$"
+            title="Bangladesh mobile: 01XXXXXXXXX or +8801XXXXXXXXX"
+            aria-label="Mobile number">
+          <input name="subject" placeholder="Subject" aria-label="Subject">
         </div>
-        <textarea name="message" rows="3" placeholder="How can we help?" required></textarea>
-        <button>Send</button>
+        <textarea name="message" rows="3" placeholder="How can we help?" required aria-label="Message"></textarea>
+        <button type="submit">Send</button>
       </form>
     </div>
   </div>
   <div class="container muted small">© {{ 2025 }} Salsan Enterprise</div>
 </footer>
 
-<!-- tiny inline script for the mobile menu -->
+<!-- Mobile menu toggle -->
 <script>
   (function(){
-    const btn = document.querySelector('.mobile-toggle');
+    const btn  = document.querySelector('.mobile-toggle');
     const menu = document.getElementById('mobileMenu');
     if (!btn || !menu) return;
     btn.addEventListener('click', function(){
@@ -102,5 +113,119 @@
     });
   })();
 </script>
+
+<!-- Theme toggle -->
+<script>
+  (function () {
+    const root = document.documentElement;
+    const btn  = document.getElementById('themeToggle');
+
+    function setTheme(t) {
+      root.setAttribute('data-theme', t);
+      localStorage.setItem('theme', t);
+      if (btn) btn.textContent = (t === 'light') ? '🌙' : '☀️'; // show opposite icon
+    }
+
+    const saved = localStorage.getItem('theme') ||
+                  (window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark');
+    setTheme(saved);
+
+    if (btn) btn.addEventListener('click', () => {
+      const next = (root.getAttribute('data-theme') === 'light') ? 'dark' : 'light';
+      setTheme(next);
+    });
+  })();
+</script>
+
+<!-- Contact forms: only show red borders after a failed submit -->
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('form.contact-form').forEach(form => {
+      form.addEventListener('submit', (e) => {
+        if (!form.checkValidity()) {
+          e.preventDefault();
+          form.classList.add('show-errors');
+        }
+      });
+    });
+  });
+</script>
+<!-- WhatsApp popup widget -->
+<div class="wa-widget" id="waWidget" aria-live="polite">
+  <button class="wa-fab" id="waFab" aria-label="Chat on WhatsApp">
+    <!-- WhatsApp icon -->
+    <svg width="22" height="22" viewBox="0 0 32 32" aria-hidden="true">
+      <path fill="#fff" d="M19.11 17.17c-.27-.13-1.62-.8-1.87-.89-.25-.09-.43-.13-.61.13-.18.27-.7.89-.86 1.07-.16.18-.32.2-.59.07-.27-.13-1.14-.42-2.17-1.35-.8-.71-1.34-1.59-1.5-1.86-.16-.27-.02-.42.12-.55.12-.12.27-.32.41-.48.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.48-.07-.13-.61-1.46-.83-2-.22-.53-.44-.46-.61-.47h-.52c-.18 0-.48.07-.73.34-.25.27-.97.95-.97 2.31 0 1.36.99 2.68 1.14 2.86.14.18 1.94 2.96 4.7 4.15.66.29 1.17.46 1.57.59.66.21 1.25.18 1.72.11.53-.08 1.62-.66 1.85-1.3.23-.64.23-1.2.16-1.3-.07-.11-.25-.18-.52-.31z"/>
+      <path fill="#fff" d="M16 3C8.83 3 3 8.83 3 16c0 2.29.62 4.44 1.69 6.28L3 29l6.9-1.8A12.95 12.95 0 0 0 16 29c7.17 0 13-5.83 13-13S23.17 3 16 3zm0 24c-2.2 0-4.25-.65-5.96-1.78l-.43-.28-4.11 1.07 1.1-3.99-.29-.45A10.98 10.98 0 1 1 27 16c0 6.08-4.92 11-11 11z"/>
+    </svg>
+  </button>
+
+  <div class="wa-card" id="waCard" aria-hidden="true">
+    <div class="wa-head">
+      <strong>Need help?</strong>
+      <button class="wa-close" id="waClose" aria-label="Close WhatsApp popup">×</button>
+    </div>
+    <div class="wa-body">
+      <input id="waName" placeholder="Your name">
+      <textarea id="waMsg" rows="3" placeholder="Type your question..."></textarea>
+      <button class="btn" id="waStart" type="button">Chat on WhatsApp</button>
+      <div class="small muted wa-foot">We reply 10:00–20:00</div>
+    </div>
+  </div>
+</div>
+<script>
+  // WhatsApp widget
+  (function () {
+    // 👉 Set your WhatsApp number in international format (no + or spaces).
+    // Example Bangladesh: 8801XXXXXXXXX
+    const WA_NUMBER = '8801851339933';
+
+    const fab   = document.getElementById('waFab');
+    const card  = document.getElementById('waCard');
+    const close = document.getElementById('waClose');
+    const start = document.getElementById('waStart');
+    const nameI = document.getElementById('waName');
+    const msgI  = document.getElementById('waMsg');
+
+    function toggleCard(force) {
+      const open = force !== undefined ? force : !card.classList.contains('open');
+      card.classList.toggle('open', open);
+      card.setAttribute('aria-hidden', open ? 'false' : 'true');
+    }
+
+    fab.addEventListener('click', () => toggleCard());
+    close.addEventListener('click', () => toggleCard(false));
+
+    function buildLink() {
+      const name = (nameI.value || '').trim();
+      const msg  = (msgI.value || '').trim();
+      const page = document.title ? `\nPage: ${document.title}` : '';
+      const text = encodeURIComponent(
+        (name ? `Hi, I'm ${name}. ` : 'Hi. ') +
+        (msg || 'I have a question about your cars.') +
+        page
+      );
+      return `https://wa.me/${WA_NUMBER}?text=${text}`;
+    }
+
+    function openWhatsApp() {
+      const url = buildLink();
+      // On mobile, open in same tab; on desktop, new tab.
+      const isMobile = /Android|iPhone|iPad|iPod|Opera Mini|IEMobile/i.test(navigator.userAgent);
+      if (isMobile) { window.location.href = url; }
+      else { window.open(url, '_blank', 'noopener'); }
+    }
+
+    start.addEventListener('click', openWhatsApp);
+
+    // Optional: auto-close card if user clicks outside it
+    document.addEventListener('click', (e) => {
+      if (!card.contains(e.target) && !fab.contains(e.target)) toggleCard(false);
+    });
+    if (location.pathname.startsWith('/admin')) document.getElementById('waWidget').style.display = 'none';
+  })();
+</script>
+
+
 </body>
 </html>

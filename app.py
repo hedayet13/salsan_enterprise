@@ -5,10 +5,10 @@ from datetime import datetime
 import click
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, current_app
 from urllib.parse import urlencode
-
+from flask import request, flash, redirect, url_for
 from flask import session as flask_session
 from flask_login import LoginManager, login_user, logout_user, login_required, current_user
-import os
+import os, uuid, re
 import uuid
 from werkzeug.utils import secure_filename
 from models import db, Admin, Car, Message, CarImage
@@ -16,6 +16,10 @@ from models import db, Admin, Car, Message, CarImage
 
 
 from config import Config
+
+EMAIL_RE     = re.compile(r"^[^@\s]+@[^@\s]+\.[^@\s]+$")           # simple, robust email check
+BD_MOBILE_RE = re.compile(r"^(?:\+?8801\d{9}|01\d{9})$")           # 01XXXXXXXXX or +8801XXXXXXXXX
+
 
 def create_app():
     app = Flask(__name__, static_folder="static", template_folder="templates")
@@ -41,6 +45,8 @@ def create_app():
     @login_manager.user_loader
     def load_user(user_id):
         return Admin.query.get(int(user_id))
+    
+    
 
     @app.route("/")
     def home():
@@ -56,6 +62,8 @@ def create_app():
             )
         cars = cars_q.limit(8).all()
         return render_template("index.html", cars=cars, q=q)
+    
+
 
     @app.route("/stock")
     def stock():
@@ -120,47 +128,80 @@ def create_app():
 
     @app.post("/inquire/<int:car_id>")
     def inquire(car_id):
-        car = Car.query.get_or_404(car_id)
-        name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip()
-        phone = request.form.get("phone", "").strip()
-        body = request.form.get("message", "").strip()
-        subject = f"Inquiry about {car.title} (ID {car.id})"
-        if not name or not body:
-            flash("Please provide your name and message.", "warning")
+        car   = Car.query.get_or_404(car_id)
+        name  = (request.form.get("name")    or "").strip()
+        email = (request.form.get("email")   or "").strip()
+        phone = (request.form.get("phone")   or "").strip()
+        body  = (request.form.get("message") or "").strip()
+
+        # ---- server-side validation ----
+        errors = []
+        if not name:
+            errors.append("Your name is required.")
+        if not email or not EMAIL_RE.match(email):
+            errors.append("Please enter a valid email address.")
+        if not body:
+            errors.append("Please enter a message.")
+        if phone and not BD_MOBILE_RE.match(phone):
+            errors.append("Please enter a valid Bangladesh mobile number (01XXXXXXXXX or +8801XXXXXXXXX).")
+
+        if errors:
+            for e in errors:
+                flash(e, "danger")
             return redirect(url_for("car_detail", car_id=car.id))
+
+        subject = f"Inquiry about {car.title} (ID {car.id})"
         msg = Message(name=name, email=email, phone=phone, subject=subject, body=body)
         db.session.add(msg)
-        # Replace image if new file uploaded
-        file = request.files.get('image_file')
-        if file and file.filename and allowed_file(file.filename):
-                filename = secure_filename(file.filename)
-                unique = f"{uuid.uuid4().hex}_{filename}"
-                upload_folder = app.config.get("UPLOAD_FOLDER", "static/uploads/cars")
-                abs_upload = upload_folder if os.path.isabs(upload_folder) else os.path.join(app.root_path, upload_folder)
-                file.save(os.path.join(abs_upload, unique))
-                static_root = os.path.join(app.root_path, 'static')
-                rel_to_static = os.path.relpath(os.path.join(abs_upload, unique), static_root)
-                car.image_url = url_for('static', filename=rel_to_static.replace('\\','/'))
+
+        # Optional: allow replacing the car's main image if an image was posted with the form
+        file = request.files.get("image_file")
+        if file and getattr(file, "filename", "") and allowed_file(file.filename):
+            filename    = secure_filename(file.filename)
+            unique_name = f"{uuid.uuid4().hex}_{filename}"
+
+            upload_folder = app.config.get("UPLOAD_FOLDER", "static/uploads/cars")
+            abs_upload = upload_folder if os.path.isabs(upload_folder) else os.path.join(app.root_path, upload_folder)
+            os.makedirs(abs_upload, exist_ok=True)
+
+            save_path = os.path.join(abs_upload, unique_name)
+            file.save(save_path)
+
+            static_root   = os.path.join(app.root_path, "static")
+            rel_to_static = os.path.relpath(save_path, static_root)
+            car.image_url = url_for("static", filename=rel_to_static.replace("\\", "/"))
+
         db.session.commit()
         flash("Thanks! Your inquiry has been received. We'll get back to you.", "success")
         return redirect(url_for("car_detail", car_id=car.id))
-
+    
     @app.post("/contact")
     def contact():
-        name = request.form.get("name", "").strip()
-        email = request.form.get("email", "").strip()
-        phone = request.form.get("phone", "").strip()
-        subject = request.form.get("subject", "").strip() or "General Inquiry"
-        body = request.form.get("message", "").strip()
-        if not name or not body:
-            flash("Please provide your name and message.", "warning")
-            return redirect(request.referrer or url_for("home"))
-        msg = Message(name=name, email=email, phone=phone, subject=subject, body=body)
-        db.session.add(msg)
+        name    = (request.form.get("name")    or "").strip()
+        email   = (request.form.get("email")   or "").strip()
+        phone   = (request.form.get("phone")   or "").strip()
+        subject = (request.form.get("subject") or "").strip()
+        message = (request.form.get("message") or "").strip()
+
+        errors = []
+        if not name: errors.append("Your name is required.")
+        if not email or not EMAIL_RE.match(email):
+            errors.append("Please enter a valid email address.")
+        if not message: errors.append("Please enter a message.")
+        if phone and not BD_MOBILE_RE.match(phone):
+            errors.append("Please enter a valid Bangladesh mobile number (01XXXXXXXXX or +8801XXXXXXXXX).")
+
+        if errors:
+            for e in errors: flash(e, "danger")
+            return redirect(url_for("home") + "#contact")
+
+        db.session.add(Message(
+            name=name, email=email, phone=phone,
+            subject=subject or "Website contact", body=message
+        ))
         db.session.commit()
-        flash("Thanks! Your message has been sent.", "success")
-        return redirect(request.referrer or url_for("home"))
+        flash("Thanks! We received your message and will get back to you.", "success")
+        return redirect(url_for("home") + "#contact")
 
     # ------------------- Admin --------------------
     @app.route("/admin/login", methods=["GET", "POST"])

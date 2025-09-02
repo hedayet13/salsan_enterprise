@@ -57,18 +57,31 @@
     </div>
 
     <h3>Contact about this car</h3>
-    <form action="{{ url_for('inquire', car_id=car.id) }}" method="post" class="contact-form">
-      <div class="grid-2">
-        <input name="name" placeholder="Your name" required>
-        <input name="email" placeholder="Email">
-      </div>
-      <div class="grid-2">
-        <input name="phone" placeholder="Phone">
-        <input placeholder="Subject" value="Inquiry: {{ car.title }}" disabled>
-      </div>
-      <textarea name="message" rows="4" placeholder="Your message..." required></textarea>
-      <button>Send Inquiry</button>
-    </form>
+<form action="{{ url_for('inquire', car_id=car.id) }}" method="post" class="contact-form">
+  <div class="grid-2">
+    <input name="name" placeholder="Your name" required aria-label="Your name">
+    <!-- Email is required + HTML5 email validation -->
+    <input name="email" type="email" placeholder="Email (required)" required aria-label="Email">
+  </div>
+
+  <div class="grid-2">
+    <!-- Phone: Bangladesh mobile number pattern (01XXXXXXXXX or +8801XXXXXXXXX) -->
+    <input
+      name="phone"
+      type="tel"
+      inputmode="tel"
+      placeholder="Mobile (01XXXXXXXXX or +8801XXXXXXXXX)"
+      pattern="^(?:\+?8801\d{9}|01\d{9})$"
+      title="Bangladesh mobile: 01XXXXXXXXX or +8801XXXXXXXXX"
+      aria-label="Mobile number">
+    <input placeholder="Subject" value="Inquiry: {{ car.title }}" disabled>
+  </div>
+
+  <textarea name="message" rows="4" placeholder="Your message..." required aria-label="Message"></textarea>
+
+  <button>Send Inquiry</button>
+</form>
+
   </div>
 </div>
 {% endblock %}

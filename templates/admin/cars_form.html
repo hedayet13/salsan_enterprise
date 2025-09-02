@@ -3,115 +3,97 @@
 {% block content %}
 
 <h1>{{ 'Edit' if car else 'Add' }} Car</h1>
+
 <form method="post" enctype="multipart/form-data" class="car-form">
+
+  <!-- Row 1 -->
   <div class="grid-3">
     <input name="title" placeholder="Title" value="{{ car.title if car else '' }}" required>
     <input name="make" placeholder="Make" value="{{ car.make if car else '' }}">
     <input name="model" placeholder="Model" value="{{ car.model if car else '' }}">
   </div>
+
+  <!-- Row 2 -->
   <div class="grid-4">
-    <input type="number" name="year" placeholder="Year" value="{{ car.year if car else '' }}">
-    <input type="number" name="price" placeholder="Price" value="{{ car.price if car else '' }}">
+    <input type="number" name="year" placeholder="Year" value="{{ car.year if car else '' }}" min="1900" step="1">
+    <input type="number" name="price" placeholder="Price" value="{{ car.price if car else '' }}" min="0" step="1">
     <input name="auction_point" placeholder="Auction point" value="{{ car.auction_point if car else '' }}">
-    <input type="number" name="mileage_km" placeholder="Mileage (km)" value="{{ car.mileage_km if car else '' }}">
-    <input name="color" placeholder="Color" value="{{ car.color if car else '' }}">
+    <input type="number" name="mileage_km" placeholder="Mileage (km)" value="{{ car.mileage_km if car else '' }}" min="0" step="1">
   </div>
+
+  <!-- Row 3 -->
   <div class="grid-4">
-    <input name="fuel_type" placeholder="Fuel (Petrol/Diesel/Hybrid/Electric)"
-      value="{{ car.fuel_type if car else '' }}">
+    <input name="color" placeholder="Color" value="{{ car.color if car else '' }}">
+    <input name="fuel_type" placeholder="Fuel (Petrol/Diesel/Hybrid/Electric)" value="{{ car.fuel_type if car else '' }}">
     <input name="transmission" placeholder="Transmission" value="{{ car.transmission if car else '' }}">
     <input name="body_type" placeholder="Body Type" value="{{ car.body_type if car else '' }}">
+  </div>
+
+  <!-- Row 4 -->
+  <div class="grid-3">
     <input name="location" placeholder="Location" value="{{ car.location if car else '' }}">
   </div>
 
-<label>Upload Images (max 20)</label>
-<input type="file" name="image_files" id="image_files" accept="image/*" multiple>
-<div id="multi_preview" class="preview-grid" style="margin-top:8px;"></div>
-<div class="small muted" id="count_hint" style="margin-top:6px;">0 / 20 selected</div>
+  <!-- Multi-image upload -->
+  <label for="image_files" style="margin-top:.25rem;">Upload Images (max 20)</label>
+  <input type="file" name="image_files" id="image_files" accept="image/*" multiple>
+  <div id="multi_preview" class="preview-grid" style="margin-top:8px;"></div>
+  <div class="small muted" id="count_hint" style="margin-top:6px;">0 / 20 selected</div>
 
-<script>
-  const MAX = 20;   // ← new max
-  const input = document.getElementById('image_files');
-  const grid  = document.getElementById('multi_preview');
-  const count = document.getElementById('count_hint');
+  <script>
+    (function () {
+      const MAX   = 20;
+      const input = document.getElementById('image_files');
+      const grid  = document.getElementById('multi_preview');
+      const count = document.getElementById('count_hint');
 
-  input.addEventListener('change', () => {
-    const files = Array.from(input.files || []);
-    if (files.length > MAX) {
-      alert(`Please select at most ${MAX} images.`);
-      input.value = '';
-      grid.innerHTML = '';
-      count.textContent = `0 / ${MAX} selected`;
-      return;
-    }
-    grid.innerHTML = '';
-    files.forEach(f => {
-      const img = document.createElement('img');
-      img.src = URL.createObjectURL(f);
-      img.style.height = '100px';
-      img.style.objectFit = 'cover';
-      img.style.border = '1px solid #333';
-      img.style.borderRadius = '6px';
-      img.style.marginRight = '8px';
-      grid.appendChild(img);
-    });
-    count.textContent = `${files.length} / ${MAX} selected`;
-  });
-</script>
+      if (!input) return;
 
+      input.addEventListener('change', () => {
+        const files = Array.from(input.files || []);
+        if (files.length > MAX) {
+          alert(`Please select at most ${MAX} images.`);
+          input.value = '';
+          grid.innerHTML = '';
+          count.textContent = `0 / ${MAX} selected`;
+          return;
+        }
+        grid.innerHTML = '';
+        files.forEach(f => {
+          const img = document.createElement('img');
+          img.src = URL.createObjectURL(f);
+          img.alt = f.name;
+          img.style.height = '100px';
+          img.style.objectFit = 'cover';
+          img.style.border = '1px solid var(--border)';
+          img.style.borderRadius = '6px';
+          grid.appendChild(img);
+        });
+        count.textContent = `${files.length} / ${MAX} selected`;
+      });
+    })();
+  </script>
 
-
-{% if car %}
-  <!-- Existing cover image preview (what dashboard uses) -->
-  <div class="preview" style="margin:8px 0 14px;">
-    <img
-      id="cover_preview"
-      src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}"
-      alt="Current cover image"
-      style="max-height:120px"
-    >
-  </div>
-
-  {% if car.images %}
-    <!-- Existing gallery thumbnails -->
-    <div class="gallery" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
-      {% for img in car.images %}
-        <img src="{{ img.url }}" alt="car image" style="max-height:90px;border:1px solid #333;border-radius:6px;">
-      {% endfor %}
+  {% if car %}
+    <!-- Current cover (used on cards/listings) -->
+    <div class="preview" style="margin:10px 0 14px;">
+      <img id="cover_preview"
+           src="{{ car.image_url or url_for('static', filename='img/placeholder.svg') }}"
+           alt="Current cover image"
+           style="max-height:120px; border:1px solid var(--border); border-radius:.5rem;">
     </div>
+
+    {% if car.images %}
+      <div class="gallery" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:10px;">
+        {% for img in car.images %}
+          <img src="{{ img.url }}" alt="car image" style="max-height:90px;border:1px solid var(--border);border-radius:6px;">
+        {% endfor %}
+      </div>
+    {% endif %}
   {% endif %}
-{% endif %}
 
-<script>
-  // Live preview for each of the 5 inputs
-  for (let i = 1; i <= 5; i++) {
-    const input = document.getElementById('image_file' + i);
-    const img   = document.getElementById('slot' + i);
-    const label = document.getElementById('slot' + i + '_name');
-    if (!input) continue;
-
-    input.addEventListener('change', (e) => {
-      const [file] = e.target.files || [];
-      if (!file) {
-        img.style.display = 'none';
-        img.src = '';
-        if (label) label.textContent = '';
-        return;
-      }
-      img.src = URL.createObjectURL(file);
-      img.style.display = 'inline-block';
-      if (label) label.textContent = file.name;
-      // also update the big cover preview if it's still placeholder
-      const cover = document.getElementById('cover_preview');
-      if (cover && (cover.src.includes('placeholder.svg') || !cover.src)) {
-        cover.src = img.src;
-      }
-    });
-  }
-</script>
-
-
-  <button>{{ 'Update' if car else 'Create' }}</button>
+  <!-- Primary submit button (fills width, no overflow) -->
+  <button class="btn primary full" type="submit">{{ 'Update' if car else 'Create' }}</button>
 </form>
 
 {% if car and car.images %}
@@ -120,7 +102,7 @@
     {% for img in car.images %}
       <div style="display:flex; flex-direction:column; align-items:center; gap:6px;">
         <img src="{{ img.url }}" alt="car image"
-             style="height:90px; width:auto; object-fit:cover; border:1px solid #333; border-radius:6px;">
+             style="height:90px; width:auto; object-fit:cover; border:1px solid var(--border); border-radius:6px;">
         <form method="post"
               action="{{ url_for('admin_car_image_delete', car_id=car.id, image_id=img.id) }}"
               onsubmit="return confirm('Delete this image?')">
@@ -130,7 +112,5 @@
     {% endfor %}
   </div>
 {% endif %}
-
-
 
 {% endblock %}
