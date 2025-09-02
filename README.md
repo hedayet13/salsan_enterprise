@@ -1,6 +1,6 @@
-# Shamsons-style Auto Dealer (Flask + SQLite)
+# Salsan enterprise Car Dealer (Flask + SQLite)
 
-A clean Flask app inspired by the layout and features of shamsonsauto.com, with:
+A clean Flask, with:
 - Stock cars
 - Delivered cars
 - Search & filter
@@ -11,7 +11,7 @@ A clean Flask app inspired by the layout and features of shamsonsauto.com, with:
 ## Quickstart
 
 ```bash
-cd shamsons_clone
+cd salsanenterprise
 python -m venv .venv
 source .venv/bin/activate  # Windows: .venv\Scripts\activate
 pip install -r requirements.txt
